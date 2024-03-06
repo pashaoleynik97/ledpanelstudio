@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 
 object Cl {
     val darkGrey = Color(0xFF292222)
-    val mainGrey = Color(0xFF383636)
+    val lightGrey = Color(0xFF383636)
+    val mainGrey = Color(0xFF2D2D2D)
     val selection = Color(0xFF475AFF)
 }
