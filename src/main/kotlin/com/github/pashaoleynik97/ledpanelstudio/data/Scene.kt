@@ -4,7 +4,7 @@ import java.util.UUID
 
 data class Scene(
     val name: String,
-    val modules: List<Module>,
+    val frames: HashMap<Int, List<Module>>,
     val sceneId: String = UUID.randomUUID().toString(),
     val iterations: Int = 1
 )
@@ -29,5 +29,5 @@ data class MRow(
     val c4: Boolean = false,
     val c5: Boolean = false,
     val c6: Boolean = false,
-    val c7: Boolean = false,
+    val c7: Boolean = false
 )

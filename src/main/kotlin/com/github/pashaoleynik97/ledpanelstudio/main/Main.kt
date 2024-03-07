@@ -302,16 +302,12 @@ private fun ScenesPane(
                         .wrapContentHeight()
                 ) {
 
-                    Spacer(Modifier.height(16.dp))
-
                     Divider(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        color = Cl.darkGrey
+                        color = Color.White
                     )
-
-                    Spacer(Modifier.height(16.dp))
 
                     Text(
                         modifier = Modifier

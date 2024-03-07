@@ -176,9 +176,11 @@ class MainViewModel {
         val newScenesList = prjScope.scenes.toMutableList().apply {
             add(
                 Scene(
-                    modules = mutableListOf<Module>().also { list ->
-                        repeat(prjScope.modulesCount) { i -> list.add(Module(ordinal = i)) }
-                    }.toList(),
+                    frames = hashMapOf(
+                        Pair(0, mutableListOf<Module>().also { list ->
+                            repeat(prjScope.modulesCount) { i -> list.add(Module(ordinal = i)) }
+                        }.toList())
+                    ),
                     name = "Scene_${System.currentTimeMillis().hashCode()}"
                 ).also { newSceneId = it.sceneId }
             )
@@ -203,6 +205,13 @@ class MainViewModel {
             Scopes.ScopeKey.Project,
             prjScope.copy(scenes = newScenesList)
         )
+        if (mState.value.currentSceneId == mState.value.sceneToDelete) {
+            mState.upd {
+                copy(
+                    currentSceneId = null
+                )
+            }
+        }
         mState.upd {
             copy(
                 scenes = prjScope.scenes,
