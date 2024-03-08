@@ -114,7 +114,12 @@ fun App(
                     }
                 )
 
-                ToolsPane()
+                ToolsPane(
+                    currentTool = vmState.tool,
+                    onToolClicked = {
+                        viewModel.onToolSelected(it)
+                    }
+                )
 
             }
 
@@ -453,14 +458,56 @@ private fun ScenesPane(
 
 @Composable
 private fun ToolsPane(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    currentTool: MainViewModel.Tool,
+    onToolClicked: (MainViewModel.Tool) -> Unit
 ) {
     Box(
         modifier = modifier
-            .widthIn(60.dp)
+            .width(60.dp)
             .fillMaxHeight()
             .background(color = Cl.lightGrey)
     ) {
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+        ) {
+
+            ToolButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                resourcePath = "svg/smart.svg",
+                enabled = currentTool == MainViewModel.Tool.SMART,
+                onClick = {
+                    onToolClicked.invoke(MainViewModel.Tool.SMART)
+                }
+            )
+
+            ToolButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                resourcePath = "svg/pen.svg",
+                enabled = currentTool == MainViewModel.Tool.PEN,
+                onClick = {
+                    onToolClicked.invoke(MainViewModel.Tool.PEN)
+                }
+            )
+
+            ToolButton(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                resourcePath = "svg/eraser.svg",
+                enabled = currentTool == MainViewModel.Tool.ERASER,
+                onClick = {
+                    onToolClicked.invoke(MainViewModel.Tool.ERASER)
+                }
+            )
+
+        }
 
     }
 

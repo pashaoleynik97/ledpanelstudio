@@ -28,6 +28,10 @@ class MainViewModel {
         EDITOR, PREVIEW
     }
 
+    enum class Tool {
+        PEN, ERASER, SMART
+    }
+
     data class VmState(
         val presentation: Presentation = Presentation.EDITOR,
         val scenes: List<Scene>,
@@ -36,6 +40,7 @@ class MainViewModel {
         val modulesCount: Int,
         val modulesDirection: Scopes.ProjectScope.Direction,
         val sceneToDelete: String? = null,
+        val tool: Tool = Tool.SMART
     ) {
 
         internal fun safeCurrentFrame(): Int {
@@ -167,7 +172,16 @@ class MainViewModel {
         val originalModule = mState.value.scenes.first {
             it.sceneId == mState.value.currentSceneId
         }.frames[mState.value.safeCurrentFrame()]!![moduleIndex]
-        val newModule = modifyModule(originalModule, row, column, true) // todo change true on valid reference
+        val newModule = modifyModule(
+            originalModule = originalModule,
+            rowIndex = row,
+            ledIndex = column,
+            enabled = when (mState.value.tool) {
+                Tool.PEN -> true
+                Tool.ERASER -> false
+                Tool.SMART -> originalModule.row(row).led(column).not()
+            }
+        )
         val newScenes = mState.value.scenes.map { scene ->
             if (scene.sceneId != mState.value.currentSceneId) scene else scene.copy(
                 frames = hashMapOf(
@@ -193,6 +207,12 @@ class MainViewModel {
         )
         mState.upd {
             copy(scenes = prjScope.scenes)
+        }
+    }
+
+    fun onToolSelected(tool: Tool) {
+        mState.upd {
+            copy(tool = tool)
         }
     }
 
@@ -304,6 +324,30 @@ class MainViewModel {
             c6 = if (ledIndex == 6) enabled else originalRow.c6,
             c7 = if (ledIndex == 7) enabled else originalRow.c7,
         )
+    }
+
+    private fun Module.row(i: Int) = when (i) {
+        0 -> r0
+        1 -> r1
+        2 -> r2
+        3 -> r3
+        4 -> r4
+        5 -> r5
+        6 -> r6
+        7 -> r7
+        else -> throw IllegalArgumentException("Module does not contain row with index $i")
+    }
+
+    private fun MRow.led(i: Int) = when (i) {
+        0 -> c0
+        1 -> c1
+        2 -> c2
+        3 -> c3
+        4 -> c4
+        5 -> c5
+        6 -> c6
+        7 -> c7
+        else -> throw IllegalArgumentException("MRow does not contain LED with index $i")
     }
 
     // endregion
