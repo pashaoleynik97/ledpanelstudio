@@ -487,6 +487,37 @@ private fun ScenesPane(
                     }
 
                     Spacer(Modifier.size(8.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .weight(1f)
+                                .align(Alignment.CenterVertically)
+                                .padding(start = 16.dp),
+                            text = "Frames:",
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+
+                        Text(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .align(Alignment.CenterVertically)
+                                .padding(end = 16.dp),
+                            text = sceneProperties.frames.toString(),
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+
+                        Spacer(Modifier.size(8.dp))
+                    }
+
+                    Spacer(Modifier.size(8.dp))
                 }
             }
 

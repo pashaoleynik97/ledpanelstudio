@@ -4,7 +4,8 @@ import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 
 data class ScenePropertiesUiData(
     val iterations: Int,
-    val interstitial: Boolean
+    val interstitial: Boolean,
+    val frames: Int
 )
 
 data class ProjectPropertiesUiData(

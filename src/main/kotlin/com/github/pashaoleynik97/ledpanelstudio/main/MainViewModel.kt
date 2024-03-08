@@ -103,7 +103,8 @@ class MainViewModel {
             if (currentSceneId == null) return null
             return ScenePropertiesUiData(
                 iterations = scenes.find { it.sceneId == currentSceneId }!!.iterations,
-                interstitial = false // todo change to actual
+                interstitial = false, // todo change to actual
+                frames = scenes.find { it.sceneId == currentSceneId }!!.frames.size
             )
         }
 
