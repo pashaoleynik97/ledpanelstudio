@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -38,11 +39,16 @@ fun App(
     println(vmState)
 
     var showDeleteDialog by remember { mutableStateOf(Pair(false, "")) }
+    var showNewProjectDialog by remember { mutableStateOf(false) }
 
     val uiCallbacks = remember {
         object : MainViewModel.UiCallbacks {
             override fun showSceneDeleteDialog(sceneName: String) {
                 showDeleteDialog = Pair(true, sceneName)
+            }
+
+            override fun showNewProjectDialog() {
+                showNewProjectDialog = true
             }
         }
     }
@@ -169,6 +175,108 @@ fun App(
             )
         }
 
+        if (showNewProjectDialog) {
+
+            var modulesCount by remember { mutableStateOf(4) }
+
+            AlertDialog(
+                title = {
+                    Text(
+                        "New Project",
+                        color = Color.White,
+                        fontSize = 18.sp
+                    )
+                },
+                onDismissRequest = {
+                    showNewProjectDialog = false
+                },
+                text = {
+                    Column {
+
+                        Text(
+                            "Choose the quantity of LED modules (this setting cannot be altered later).",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+
+                        Spacer(Modifier.size(48.dp))
+
+                        Row(
+                            Modifier
+                                .wrapContentSize()
+                                .align(Alignment.CenterHorizontally)
+                        ) {
+
+                            Text(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                text = "Modules:",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+
+                            Spacer(Modifier.size(16.dp))
+
+                            NumberPickerUi(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                value = modulesCount,
+                                onIncrement = {
+                                    if (modulesCount <= 7) modulesCount += 1
+                                },
+                                onDecrement = {
+                                    if (modulesCount >= 2) modulesCount -= 1
+                                }
+                            )
+
+                        }
+
+                        Spacer(Modifier.size(48.dp))
+
+                        Text(
+                            modifier = Modifier
+                                .widthIn(300.dp, 600.dp),
+                            text = "Please be aware that selecting 'Create' will generate a new project, and any unsaved " +
+                                    "modifications in the current project will not be retained. Ensure that you have saved " +
+                                    "all necessary changes to the current project before proceeding.",
+                            color = Color.Red,
+                            fontSize = 14.sp
+                        )
+                    }
+                },
+                buttons = {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Button(
+                            onClick = {
+                                showNewProjectDialog = false
+                                viewModel.onNewProjectCreationAccepted(
+                                    modules = modulesCount
+                                )
+                            }
+                        ) {
+                            Text("Create")
+                        }
+
+                        Spacer(Modifier.size(8.dp))
+
+                        Button(
+                            onClick = {
+                                showNewProjectDialog = false
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+            )
+        }
 
     }
 
@@ -316,7 +424,7 @@ private fun ScenesPane(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = 16.dp),
-                        color = Color.White
+                        color = Color.White.copy(alpha = 0.5f)
                     )
 
                     Text(
@@ -369,7 +477,7 @@ private fun ScenesPane(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp),
-                    color = Color.White
+                    color = Color.White.copy(alpha = 0.5f)
                 )
 
                 Text(
@@ -530,14 +638,14 @@ private fun MainPane(
                 .fillMaxWidth()
                 .heightIn(50.dp, 300.dp)
                 .wrapContentHeight()
-                .padding(50.dp)
+                .padding(50.dp),
+            horizontalArrangement = Arrangement.Center
         ) {
 
             modules.forEachIndexed { mIndex, module ->
                 ModuleUI(
                     modifier = Modifier
-                        .fillMaxHeight()
-                        .weight(1f),
+                        .weight(1f, fill = false),
                     leds = module.toUiLedEnabledMatrix(),
                     onClick = { row, column ->
                         onLedClicked.invoke(
@@ -568,10 +676,35 @@ fun main() = application {
         MenuBar {
             Menu("File", mnemonic = 'F') {
                 Item(
-                    "Exit",
+                    "New Project",
+                    mnemonic = 'N',
+                    onClick = {
+                        vm.onNewProjectClicked()
+                    },
+                    icon = painterResource("svg/add.svg")
+                )
+                Item(
+                    "Open",
+                    mnemonic = 'O',
                     onClick = {
 
                     },
+                    icon = painterResource("svg/open.svg")
+                )
+                Item(
+                    "Save",
+                    mnemonic = 'S',
+                    onClick = {
+
+                    },
+                    icon = painterResource("svg/save.svg")
+                )
+                Item(
+                    "Save as...",
+                    onClick = {
+
+                    },
+                    icon = painterResource("svg/save_as.svg")
                 )
             }
         }

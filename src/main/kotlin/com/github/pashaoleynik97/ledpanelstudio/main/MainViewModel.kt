@@ -14,6 +14,7 @@ class MainViewModel {
 
     interface UiCallbacks {
         fun showSceneDeleteDialog(sceneName: String)
+        fun showNewProjectDialog()
     }
 
     var uiCallbacks: UiCallbacks? = null
@@ -214,6 +215,27 @@ class MainViewModel {
         mState.upd {
             copy(tool = tool)
         }
+    }
+
+    fun onNewProjectClicked() {
+        uiCallbacks?.showNewProjectDialog()
+    }
+
+    fun onNewProjectCreationAccepted(modules: Int) {
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            Scopes.ProjectScope(
+                modulesCount = modules
+            )
+        )
+        mState.upd {
+            VmState(
+                scenes = prjScope.scenes,
+                modulesCount = prjScope.modulesCount,
+                modulesDirection = prjScope.direction
+            )
+        }
+        addScene()
     }
 
     // endregion
