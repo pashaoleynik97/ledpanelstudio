@@ -92,7 +92,7 @@ class MainViewModel {
                     selected = fIndex == safeCurrentFrame(),
                     fwdAvailable = fIndex != frames.indices.last,
                     bwdAvailable = fIndex != 0,
-                    duration = framesTime[safeCurrentFrame()],
+                    duration = framesTime[fIndex],
                     modules = frame
                 )
             }
@@ -361,6 +361,32 @@ class MainViewModel {
             copy(
                 scenes = prjScope.scenes,
                 currentFrame = newSelection
+            )
+        }
+    }
+
+    fun onFrameTimeSelected(frameNumber: Int, frameTime: Long) {
+        if (mState.value.currentSceneId == null) return
+        val oldScene = prjScope.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!
+        val oldSceneIndex = prjScope.scenes.indexOfFirst {
+            it.sceneId == mState.value.currentSceneId
+        }
+        val newTimes = oldScene.framesTime.toMutableList().apply { this[frameNumber] = frameTime }
+        val newScene = oldScene.copy(
+            framesTime = newTimes
+        )
+        val newScenes = prjScope.scenes.toMutableList().apply { this[oldSceneIndex] = newScene }
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            prjScope.copy(
+                scenes = newScenes
+            )
+        )
+        mState.upd {
+            copy(
+                scenes = prjScope.scenes
             )
         }
     }

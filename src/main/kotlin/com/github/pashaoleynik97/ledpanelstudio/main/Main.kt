@@ -131,6 +131,9 @@ fun App(
                     },
                     onFrameCopyClicked = {
                         viewModel.onCopyFrameClicked()
+                    },
+                    onFrameTimeSelected = { frameNumber, frameTime ->
+                        viewModel.onFrameTimeSelected(frameNumber, frameTime)
                     }
                 )
 
@@ -644,8 +647,10 @@ private fun MainPane(
     onAddFrameClicked: () -> Unit,
     onDeleteFrameClicked: () -> Unit,
     onFrameClicked: (number: Int) -> Unit,
-    onFrameCopyClicked: () -> Unit
+    onFrameCopyClicked: () -> Unit,
+    onFrameTimeSelected: (frameNumber: Int, frameTime: Long) -> Unit
 ) {
+
     Box(
         modifier = modifier
             .fillMaxHeight()
@@ -766,8 +771,15 @@ private fun MainPane(
                                 frameItem = frame,
                                 onFrameClicked = {
                                     onFrameClicked(frame.number)
+                                },
+                                onFrameTimeSelected = { time ->
+                                    onFrameTimeSelected.invoke(
+                                        frame.number,
+                                        time
+                                    )
                                 }
                             )
+
                             Spacer(Modifier.size(8.dp))
                         }
                     }
