@@ -1,6 +1,7 @@
 package com.github.pashaoleynik97.ledpanelstudio.main
 
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.mutableStateOf
 import com.github.pashaoleynik97.ledpanelstudio.data.MRow
 import com.github.pashaoleynik97.ledpanelstudio.data.Module
@@ -11,8 +12,12 @@ import com.github.pashaoleynik97.ledpanelstudio.ui.LSSection
 import com.github.pashaoleynik97.ledpanelstudio.utils.insertAt
 import com.github.pashaoleynik97.ledpanelstudio.utils.swap
 import com.github.pashaoleynik97.ledpanelstudio.utils.upd
+import kotlinx.coroutines.*
 
 class MainViewModel {
+
+    private val animScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var animJob: Job? = null
 
     interface UiCallbacks {
         fun showSceneDeleteDialog(sceneName: String)
@@ -43,7 +48,8 @@ class MainViewModel {
         val modulesCount: Int,
         val modulesDirection: Scopes.ProjectScope.Direction,
         val sceneToDelete: String? = null,
-        val tool: Tool = Tool.SMART
+        val tool: Tool = Tool.SMART,
+        val playing: Boolean = false
     ) {
 
         internal fun safeCurrentFrame(): Int {
@@ -140,20 +146,31 @@ class MainViewModel {
     // region [API]
 
     fun switchPresentation(p: Presentation) {
+        if (p == Presentation.EDITOR) {
+            animJob?.cancel()
+            mState.upd {
+                copy(
+                    playing = false
+                )
+            }
+        }
         mState.upd {
             copy(presentation = p)
         }
     }
 
     fun onModulesDirectionChanged(direction: Scopes.ProjectScope.Direction) {
+        if (isAnimPlaying) return
         setupModulesDirection(direction)
     }
 
     fun onAddScenePressed() {
+        if (isAnimPlaying) return
         addScene()
     }
 
     fun onDeleteScenePressed(sceneId: String) {
+        if (isAnimPlaying) return
         mState.upd {
             copy(sceneToDelete = sceneId)
         }
@@ -161,16 +178,19 @@ class MainViewModel {
     }
 
     fun onDeleteSceneConfirmed() {
+        if (isAnimPlaying) return
         deleteScene()
     }
 
     fun onDeleteSceneRejected() {
+        if (isAnimPlaying) return
         mState.upd {
             copy(sceneToDelete = null)
         }
     }
 
     fun onSceneIterationsIncrement() {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         val cntIterations = mState.value.scenes.find { it.sceneId == mState.value.currentSceneId }!!.iterations
         if (cntIterations >= 500) return
@@ -178,6 +198,7 @@ class MainViewModel {
     }
 
     fun onSceneIterationsDecrement() {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         val cntIterations = mState.value.scenes.find { it.sceneId == mState.value.currentSceneId }!!.iterations
         if (cntIterations < 2) return
@@ -185,17 +206,19 @@ class MainViewModel {
     }
 
     fun onSceneClicked(sceneId: String) {
+        if (isAnimPlaying) return
         mState.upd {
             copy(currentSceneId = sceneId)
         }
     }
 
     fun onLedClicked(moduleIndex: Int, row: Int, column: Int) {
+        if (isAnimPlaying) return
         if (mState.value.presentation == Presentation.PREVIEW) return
         if (mState.value.currentSceneId == null) return
         val originalModule = mState.value.scenes.first {
             it.sceneId == mState.value.currentSceneId
-        }.frames[mState.value.safeCurrentFrame()]!![moduleIndex]
+        }.frames[mState.value.safeCurrentFrame()][moduleIndex]
         val newModule = modifyModule(
             originalModule = originalModule,
             rowIndex = row,
@@ -230,16 +253,19 @@ class MainViewModel {
     }
 
     fun onToolSelected(tool: Tool) {
+        if (isAnimPlaying) return
         mState.upd {
             copy(tool = tool)
         }
     }
 
     fun onNewProjectClicked() {
+        if (isAnimPlaying) return
         uiCallbacks?.showNewProjectDialog()
     }
 
     fun onNewProjectCreationAccepted(modules: Int) {
+        if (isAnimPlaying) return
         Scopes.updateScope(
             Scopes.ScopeKey.Project,
             Scopes.ProjectScope(
@@ -257,6 +283,7 @@ class MainViewModel {
     }
 
     fun onFrameClicked(number: Int) {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         mState.upd {
             copy(currentFrame = number)
@@ -264,6 +291,7 @@ class MainViewModel {
     }
 
     fun onAddFrameClicked() {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         val oldScene = prjScope.scenes.find {
             it.sceneId == mState.value.currentSceneId
@@ -298,6 +326,7 @@ class MainViewModel {
     }
 
     fun onDeleteFrameClicked() {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         val deleteKey = mState.value.safeCurrentFrame()
         val oldScene = prjScope.scenes.find {
@@ -335,6 +364,7 @@ class MainViewModel {
     }
 
     fun onCopyFrameClicked() {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         val copyKey = mState.value.safeCurrentFrame()
         val oldScene = prjScope.scenes.find {
@@ -368,6 +398,7 @@ class MainViewModel {
     }
 
     fun onFrameTimeSelected(frameNumber: Int, frameTime: Long) {
+        if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
         val oldScene = prjScope.scenes.find {
             it.sceneId == mState.value.currentSceneId
@@ -394,11 +425,53 @@ class MainViewModel {
     }
 
     fun onFrameMoveBwdClicked(frameNumber: Int) {
+        if (isAnimPlaying) return
         swapFrames(frameNumber, frameNumber - 1)
     }
 
     fun onFrameMoveFwdClicked(frameNumber: Int) {
+        if (isAnimPlaying) return
         swapFrames(frameNumber, frameNumber + 1)
+    }
+
+    fun onPlayClicked() {
+        if (isAnimPlaying) return
+        if (mState.value.currentSceneId == null) return
+        mState.upd {
+            copy(
+                presentation = Presentation.PREVIEW,
+                playing = true
+            )
+        }
+        animJob?.cancel()
+        animJob = null
+        val animFrames = mState.value.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!.frames.indices
+        val animTimings = mState.value.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!.framesTime
+        animJob = animScope.launch {
+            while (true) {
+                animFrames.forEach { index ->
+                    mState.upd {
+                        copy(currentFrame = index)
+                    }
+                    delay(animTimings[index])
+                }
+            }
+        }
+    }
+
+    fun onStopClicked() {
+        if (mState.value.currentSceneId == null) return
+        animJob?.cancel()
+        animJob = null
+        mState.upd {
+            copy(
+                playing = false
+            )
+        }
     }
 
     // endregion
@@ -575,6 +648,9 @@ class MainViewModel {
 
     private val prjScope: Scopes.ProjectScope
         get() = Scopes.getOrOpenScope(Scopes.ScopeKey.Project)
+
+    private val isAnimPlaying: Boolean
+        get() = mState.value.playing
 
     // endregion
 

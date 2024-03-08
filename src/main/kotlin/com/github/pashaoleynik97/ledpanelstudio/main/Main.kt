@@ -140,6 +140,12 @@ fun App(
                     },
                     onFrameMoveBwdClicked = {
                         viewModel.onFrameMoveBwdClicked(it)
+                    },
+                    onPlayClicked = {
+                        viewModel.onPlayClicked()
+                    },
+                    onStopClicked = {
+                        viewModel.onStopClicked()
                     }
                 )
 
@@ -687,7 +693,9 @@ private fun MainPane(
     onFrameCopyClicked: () -> Unit,
     onFrameTimeSelected: (frameNumber: Int, frameTime: Long) -> Unit,
     onFrameMoveBwdClicked: (frameNumber: Int) -> Unit,
-    onFrameMoveFwdClicked: (frameNumber: Int) -> Unit
+    onFrameMoveFwdClicked: (frameNumber: Int) -> Unit,
+    onPlayClicked: () -> Unit,
+    onStopClicked: () -> Unit
 ) {
 
     Box(
@@ -741,7 +749,8 @@ private fun MainPane(
                         .wrapContentSize()
                         .padding(
                             start = 16.dp,
-                            top = 16.dp
+                            top = 16.dp,
+                            end = 16.dp
                         )
                 ) {
 
@@ -786,6 +795,38 @@ private fun MainPane(
                     ) {
                         Icon(
                             painter = painterResource("svg/delete.svg"),
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+
+                    Spacer(Modifier.weight(1f))
+
+                    IconButton(
+                        modifier = Modifier
+                            .size(20.dp),
+                        onClick = {
+                            onPlayClicked.invoke()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("svg/play.svg"),
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+
+                    Spacer(Modifier.size(24.dp))
+
+                    IconButton(
+                        modifier = Modifier
+                            .size(20.dp),
+                        onClick = {
+                            onStopClicked.invoke()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("svg/stop.svg"),
                             contentDescription = null,
                             tint = Color.White
                         )
