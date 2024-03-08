@@ -2,9 +2,10 @@ package com.github.pashaoleynik97.ledpanelstudio.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,19 +15,30 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun ModuleUI(
-    leds: List<Pair<Int, Int>>
+    modifier: Modifier,
+    leds: List<Pair<Int, Int>>,
+    onClick: (row: Int, column: Int) -> Unit
 ) {
 
     Column (
-        Modifier
-            .size(80.dp)
-            .background(color = Color.Black)
+        modifier
+            .then(
+                Modifier
+                    .aspectRatio(1f, matchHeightConstraintsFirst = true)
+                    .background(color = Cl.moduleBlack)
+            )
     ) {
 
         for (i in 0..7) {
-            Row {
+            Row(Modifier.weight(1f)) {
                 for (j in 0..7) {
-                    Led(enabled = leds.firstOrNull { it.first == j && it.second == i } != null)
+                    Led(
+                        modifier = Modifier.weight(1f),
+                        enabled = leds.firstOrNull { it.first == i && it.second == j } != null,
+                        onClick = {
+                            onClick.invoke(i, j)
+                        }
+                    )
                 }
             }
         }
@@ -37,14 +49,20 @@ fun ModuleUI(
 
 @Composable
 private fun Led(
-    enabled: Boolean
+    modifier: Modifier,
+    enabled: Boolean,
+    onClick: () -> Unit
 ) {
     Canvas(
-        Modifier.size(10.dp)
+        modifier
+            .aspectRatio(1f)
+            .clickable {
+                onClick.invoke()
+            }
     ) {
         drawCircle(
-            radius = 4.dp.toPx(),
-            color = Color.Blue,
+            radius = (this.size.height / 2f) - 1.dp.toPx(),
+            color = if (enabled) Cl.selection else Color.DarkGray,
             style = if (enabled) Fill else Stroke(width = 1.dp.toPx())
         )
     }

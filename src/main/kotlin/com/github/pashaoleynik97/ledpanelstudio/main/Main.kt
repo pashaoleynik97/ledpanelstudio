@@ -14,17 +14,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.MenuBar
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
+import com.github.pashaoleynik97.ledpanelstudio.data.Module
 import com.github.pashaoleynik97.ledpanelstudio.main.data.*
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 import com.github.pashaoleynik97.ledpanelstudio.ui.*
@@ -106,7 +103,15 @@ fun App(
 
                 MainPane(
                     modifier = Modifier
-                        .weight(1f)
+                        .weight(1f),
+                    modules = vmState.currentModules(),
+                    onLedClicked = { moduleIndex, row, column ->
+                        viewModel.onLedClicked(
+                            moduleIndex = moduleIndex,
+                            row = row,
+                            column = column
+                        )
+                    }
                 )
 
                 ToolsPane()
@@ -463,7 +468,9 @@ private fun ToolsPane(
 
 @Composable
 private fun MainPane(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    modules: List<Module>,
+    onLedClicked: (moduleIndex: Int, row: Int, column: Int) -> Unit
 ) {
     Box(
         modifier = modifier
@@ -471,8 +478,33 @@ private fun MainPane(
             .background(color = Cl.mainGrey)
     ) {
 
-    }
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .heightIn(50.dp, 300.dp)
+                .wrapContentHeight()
+                .padding(50.dp)
+        ) {
 
+            modules.forEachIndexed { mIndex, module ->
+                ModuleUI(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(1f),
+                    leds = module.toUiLedEnabledMatrix(),
+                    onClick = { row, column ->
+                        onLedClicked.invoke(
+                            mIndex,
+                            row,
+                            column
+                        )
+                    }
+                )
+            }
+
+        }
+
+    }
 }
 
 

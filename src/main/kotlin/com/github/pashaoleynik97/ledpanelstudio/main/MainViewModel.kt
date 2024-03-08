@@ -2,7 +2,7 @@ package com.github.pashaoleynik97.ledpanelstudio.main
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import com.github.pashaoleynik97.ledpanelstudio.data.MRow
 import com.github.pashaoleynik97.ledpanelstudio.data.Module
 import com.github.pashaoleynik97.ledpanelstudio.data.Scene
 import com.github.pashaoleynik97.ledpanelstudio.main.data.*
@@ -31,11 +31,17 @@ class MainViewModel {
     data class VmState(
         val presentation: Presentation = Presentation.EDITOR,
         val scenes: List<Scene>,
+        val currentFrame: Int = 0,
         val currentSceneId: String? = null,
         val modulesCount: Int,
         val modulesDirection: Scopes.ProjectScope.Direction,
-        val sceneToDelete: String? = null
+        val sceneToDelete: String? = null,
     ) {
+
+        internal fun safeCurrentFrame(): Int {
+            if (currentFrame > scenes.find { it.sceneId == currentSceneId }!!.frames.entries.indices.last) return 0
+            return currentFrame
+        }
 
         fun presentationSections(): List<LSSection> {
             return listOf(
@@ -79,6 +85,11 @@ class MainViewModel {
                 modules = modulesCount,
                 direction = modulesDirection
             )
+        }
+
+        fun currentModules(): List<Module> {
+            if (currentSceneId == null) return listOf()
+            return scenes.find { it.sceneId == currentSceneId }!!.frames[safeCurrentFrame()]!!
         }
 
     }
@@ -148,6 +159,40 @@ class MainViewModel {
     fun onSceneClicked(sceneId: String) {
         mState.upd {
             copy(currentSceneId = sceneId)
+        }
+    }
+
+    fun onLedClicked(moduleIndex: Int, row: Int, column: Int) {
+        if (mState.value.currentSceneId == null) return
+        val originalModule = mState.value.scenes.first {
+            it.sceneId == mState.value.currentSceneId
+        }.frames[mState.value.safeCurrentFrame()]!![moduleIndex]
+        val newModule = modifyModule(originalModule, row, column, true) // todo change true on valid reference
+        val newScenes = mState.value.scenes.map { scene ->
+            if (scene.sceneId != mState.value.currentSceneId) scene else scene.copy(
+                frames = hashMapOf(
+                    *(scene.frames.entries.map { frame ->
+                        if (frame.key != mState.value.safeCurrentFrame())
+                            frame.toPair()
+                        else
+                            Pair(
+                                frame.key,
+                                frame.value.mapIndexed { mIndex, module ->
+                                    if (mIndex != moduleIndex) module else newModule
+                                }
+                            )
+                    }).toTypedArray()
+                )
+            )
+        }
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            prjScope.copy(
+                scenes = newScenes
+            )
+        )
+        mState.upd {
+            copy(scenes = prjScope.scenes)
         }
     }
 
@@ -235,6 +280,32 @@ class MainViewModel {
         }
     }
 
+    private fun modifyModule(originalModule: Module, rowIndex: Int, ledIndex: Int, enabled: Boolean): Module {
+        return originalModule.copy(
+            r0 = if (rowIndex == 0) modifyRow(originalModule.r0, ledIndex, enabled) else originalModule.r0,
+            r1 = if (rowIndex == 1) modifyRow(originalModule.r1, ledIndex, enabled) else originalModule.r1,
+            r2 = if (rowIndex == 2) modifyRow(originalModule.r2, ledIndex, enabled) else originalModule.r2,
+            r3 = if (rowIndex == 3) modifyRow(originalModule.r3, ledIndex, enabled) else originalModule.r3,
+            r4 = if (rowIndex == 4) modifyRow(originalModule.r4, ledIndex, enabled) else originalModule.r4,
+            r5 = if (rowIndex == 5) modifyRow(originalModule.r5, ledIndex, enabled) else originalModule.r5,
+            r6 = if (rowIndex == 6) modifyRow(originalModule.r6, ledIndex, enabled) else originalModule.r6,
+            r7 = if (rowIndex == 7) modifyRow(originalModule.r7, ledIndex, enabled) else originalModule.r7,
+        )
+    }
+
+    private fun modifyRow(originalRow: MRow, ledIndex: Int, enabled: Boolean): MRow {
+        return originalRow.copy(
+            c0 = if (ledIndex == 0) enabled else originalRow.c0,
+            c1 = if (ledIndex == 1) enabled else originalRow.c1,
+            c2 = if (ledIndex == 2) enabled else originalRow.c2,
+            c3 = if (ledIndex == 3) enabled else originalRow.c3,
+            c4 = if (ledIndex == 4) enabled else originalRow.c4,
+            c5 = if (ledIndex == 5) enabled else originalRow.c5,
+            c6 = if (ledIndex == 6) enabled else originalRow.c6,
+            c7 = if (ledIndex == 7) enabled else originalRow.c7,
+        )
+    }
+
     // endregion
 
     //==============================================================================================
@@ -248,4 +319,16 @@ class MainViewModel {
 
     // endregion
 
+}
+
+fun Module.toUiLedEnabledMatrix(): List<Pair<Int, Int>> {
+    val rows = listOf(r0, r1, r2, r3, r4, r5, r6, r7)
+
+    fun MRow.columns() = listOf(c0, c1, c2, c3, c4, c5, c6, c7)
+
+    return rows.flatMapIndexed { rowIndex, row ->
+        row.columns().mapIndexedNotNull { columnIndex, column ->
+            if (column) Pair(rowIndex, columnIndex) else null
+        }
+    }
 }
