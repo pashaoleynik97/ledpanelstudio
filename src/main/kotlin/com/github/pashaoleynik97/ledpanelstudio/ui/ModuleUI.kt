@@ -16,8 +16,9 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun ModuleUI(
     modifier: Modifier,
+    isThumbnail: Boolean = false,
     leds: List<Pair<Int, Int>>,
-    onClick: (row: Int, column: Int) -> Unit
+    onClick: ((row: Int, column: Int) -> Unit)? = null
 ) {
 
     Column (
@@ -35,8 +36,9 @@ fun ModuleUI(
                     Led(
                         modifier = Modifier.weight(1f),
                         enabled = leds.firstOrNull { it.first == i && it.second == j } != null,
+                        isThumbnail = isThumbnail,
                         onClick = {
-                            onClick.invoke(i, j)
+                            onClick?.invoke(i, j)
                         }
                     )
                 }
@@ -51,19 +53,35 @@ fun ModuleUI(
 private fun Led(
     modifier: Modifier,
     enabled: Boolean,
-    onClick: () -> Unit
+    isThumbnail: Boolean,
+    onClick: (() -> Unit)? = null
 ) {
+
+    val clickableModifier = Modifier.clickable {
+        onClick?.invoke()
+    }
+
+    val nonClickableModifier = Modifier
+
     Canvas(
         modifier
             .aspectRatio(1f)
-            .clickable {
-                onClick.invoke()
-            }
+            .then(
+                if (onClick != null) clickableModifier else nonClickableModifier
+            )
     ) {
-        drawCircle(
-            radius = (this.size.height / 2f) - 1.dp.toPx(),
-            color = if (enabled) Cl.selection else Color.DarkGray,
-            style = if (enabled) Fill else Stroke(width = 1.dp.toPx())
-        )
+        if (isThumbnail) {
+            drawRect(
+                size = this.size,
+                color = if (enabled) Cl.selection else Cl.moduleBlack,
+                style = Fill
+            )
+        } else {
+            drawCircle(
+                radius = (this.size.height / 2f) - 1.dp.toPx(),
+                color = if (enabled) Cl.selection else Color.DarkGray,
+                style = if (enabled) Fill else Stroke(width = 1.dp.toPx())
+            )
+        }
     }
 }

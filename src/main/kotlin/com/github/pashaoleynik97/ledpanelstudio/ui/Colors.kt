@@ -8,4 +8,5 @@ object Cl {
     val mainGrey = Color(0xFF2D2D2D)
     val selection = Color(0xFF475AFF)
     val moduleBlack = Color(0xFF171717)
+    val light = Color(0xFFD9D9D9)
 }

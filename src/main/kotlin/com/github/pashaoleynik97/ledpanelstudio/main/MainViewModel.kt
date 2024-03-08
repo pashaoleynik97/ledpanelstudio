@@ -8,6 +8,7 @@ import com.github.pashaoleynik97.ledpanelstudio.data.Scene
 import com.github.pashaoleynik97.ledpanelstudio.main.data.*
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 import com.github.pashaoleynik97.ledpanelstudio.ui.LSSection
+import com.github.pashaoleynik97.ledpanelstudio.utils.insertAt
 import com.github.pashaoleynik97.ledpanelstudio.utils.upd
 
 class MainViewModel {
@@ -45,7 +46,7 @@ class MainViewModel {
     ) {
 
         internal fun safeCurrentFrame(): Int {
-            if (currentFrame > scenes.find { it.sceneId == currentSceneId }!!.frames.entries.indices.last) return 0
+            if (currentFrame > scenes.find { it.sceneId == currentSceneId }!!.frames.indices.last) return 0
             return currentFrame
         }
 
@@ -78,6 +79,25 @@ class MainViewModel {
             )
         }
 
+        fun framesList(): List<FrameItem> {
+            if (scenes.isEmpty()) return listOf()
+            val scene = scenes.first {
+                it.sceneId == currentSceneId
+            }
+            val frames = scene.frames
+            val framesTime = scene.framesTime
+            return frames.mapIndexed { fIndex, frame ->
+                FrameItem(
+                    number = fIndex,
+                    selected = fIndex == safeCurrentFrame(),
+                    fwdAvailable = fIndex != frames.indices.last,
+                    bwdAvailable = fIndex != 0,
+                    duration = framesTime[safeCurrentFrame()],
+                    modules = frame
+                )
+            }
+        }
+
         fun sceneProperties(): ScenePropertiesUiData? {
             if (currentSceneId == null) return null
             return ScenePropertiesUiData(
@@ -95,7 +115,7 @@ class MainViewModel {
 
         fun currentModules(): List<Module> {
             if (currentSceneId == null) return listOf()
-            return scenes.find { it.sceneId == currentSceneId }!!.frames[safeCurrentFrame()]!!
+            return scenes.find { it.sceneId == currentSceneId }!!.frames[safeCurrentFrame()]
         }
 
     }
@@ -169,6 +189,7 @@ class MainViewModel {
     }
 
     fun onLedClicked(moduleIndex: Int, row: Int, column: Int) {
+        if (mState.value.presentation == Presentation.PREVIEW) return
         if (mState.value.currentSceneId == null) return
         val originalModule = mState.value.scenes.first {
             it.sceneId == mState.value.currentSceneId
@@ -185,20 +206,15 @@ class MainViewModel {
         )
         val newScenes = mState.value.scenes.map { scene ->
             if (scene.sceneId != mState.value.currentSceneId) scene else scene.copy(
-                frames = hashMapOf(
-                    *(scene.frames.entries.map { frame ->
-                        if (frame.key != mState.value.safeCurrentFrame())
-                            frame.toPair()
+                frames = scene.frames.mapIndexed { fIndex, frame ->
+                        if (fIndex != mState.value.safeCurrentFrame())
+                            frame
                         else
-                            Pair(
-                                frame.key,
-                                frame.value.mapIndexed { mIndex, module ->
-                                    if (mIndex != moduleIndex) module else newModule
-                                }
-                            )
-                    }).toTypedArray()
+                            frame.mapIndexed { mIndex, module ->
+                                if (mIndex != moduleIndex) module else newModule
+                            }
+                    }
                 )
-            )
         }
         Scopes.updateScope(
             Scopes.ScopeKey.Project,
@@ -238,6 +254,117 @@ class MainViewModel {
         addScene()
     }
 
+    fun onFrameClicked(number: Int) {
+        if (mState.value.currentSceneId == null) return
+        mState.upd {
+            copy(currentFrame = number)
+        }
+    }
+
+    fun onAddFrameClicked() {
+        if (mState.value.currentSceneId == null) return
+        val oldScene = prjScope.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!
+        val oldFrames = oldScene.frames
+        val newKey = oldFrames.indices.last + 1
+        val newFrames = oldFrames.insertAt(
+            newKey,
+            mutableListOf<Module>().also { list ->
+                repeat(prjScope.modulesCount) { i -> list.add(Module(ordinal = i)) }
+            }
+        )
+        val oldTime = oldScene.framesTime
+        val newTime = oldTime.insertAt(newKey, oldTime.last())
+        val newScene = oldScene.copy(
+            frames = newFrames,
+            framesTime = newTime
+        )
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            prjScope.copy(
+                scenes = prjScope.scenes.map {
+                    if (it.sceneId == oldScene.sceneId) newScene else it
+                }
+            )
+        )
+        mState.upd {
+            copy(
+                scenes = prjScope.scenes
+            )
+        }
+    }
+
+    fun onDeleteFrameClicked() {
+        if (mState.value.currentSceneId == null) return
+        val deleteKey = mState.value.safeCurrentFrame()
+        val oldScene = prjScope.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!
+        if (oldScene.frames.size < 2) return
+        val newFrames = oldScene.frames.toMutableList().apply { removeAt(deleteKey) }
+        val newFrameTimes = oldScene.framesTime.toMutableList().apply { removeAt(deleteKey) }
+        val newScene = oldScene.copy(
+            frames = newFrames,
+            framesTime = newFrameTimes
+        )
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            prjScope.copy(
+                scenes = prjScope.scenes.map {
+                    if (it.sceneId == oldScene.sceneId) newScene else it
+                }
+            )
+        )
+        val suggestedNewKey = deleteKey - 1
+        val newSelection = if (deleteKey == 0) {
+            0
+        } else if (suggestedNewKey > newScene.frames.indices.last) {
+            newScene.frames.indices.last
+        } else {
+            suggestedNewKey
+        }
+        mState.upd {
+            copy(
+                scenes = prjScope.scenes,
+                currentFrame = newSelection
+            )
+        }
+    }
+
+    fun onCopyFrameClicked() {
+        if (mState.value.currentSceneId == null) return
+        val copyKey = mState.value.safeCurrentFrame()
+        val oldScene = prjScope.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!
+        val oldSceneIndex = prjScope.scenes.indexOfFirst {
+            it.sceneId == mState.value.currentSceneId
+        }
+        val oldTime = oldScene.framesTime[copyKey]
+        val frameCopy = oldScene.frames[copyKey].toList()
+        val newFrames = oldScene.frames.insertAt(copyKey + 1, frameCopy)
+        val newFrameTimes = oldScene.framesTime.insertAt(copyKey + 1, oldTime)
+        val newScene = oldScene.copy(
+            frames = newFrames,
+            framesTime = newFrameTimes
+        )
+        val newScenes = prjScope.scenes.toMutableList().apply { this[oldSceneIndex] = newScene }
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            prjScope.copy(
+                scenes = newScenes
+            )
+        )
+        val newSelection = copyKey + 1
+        mState.upd {
+            copy(
+                scenes = prjScope.scenes,
+                currentFrame = newSelection
+            )
+        }
+    }
+
     // endregion
 
     //==============================================================================================
@@ -263,10 +390,13 @@ class MainViewModel {
         val newScenesList = prjScope.scenes.toMutableList().apply {
             add(
                 Scene(
-                    frames = hashMapOf(
-                        Pair(0, mutableListOf<Module>().also { list ->
+                    frames = listOf(
+                        mutableListOf<Module>().also { list ->
                             repeat(prjScope.modulesCount) { i -> list.add(Module(ordinal = i)) }
-                        }.toList())
+                        }
+                    ),
+                    framesTime = listOf(
+                        500L
                     ),
                     name = "Scene_${System.currentTimeMillis().hashCode()}"
                 ).also { newSceneId = it.sceneId }

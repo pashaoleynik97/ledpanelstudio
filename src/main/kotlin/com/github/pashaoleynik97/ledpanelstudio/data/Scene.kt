@@ -4,7 +4,8 @@ import java.util.UUID
 
 data class Scene(
     val name: String,
-    val frames: HashMap<Int, List<Module>>,
+    val frames: List<List<Module>>,
+    val framesTime: List<Long>,
     val sceneId: String = UUID.randomUUID().toString(),
     val iterations: Int = 1
 )

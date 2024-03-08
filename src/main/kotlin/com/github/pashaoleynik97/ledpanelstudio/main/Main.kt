@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -111,12 +112,25 @@ fun App(
                     modifier = Modifier
                         .weight(1f),
                     modules = vmState.currentModules(),
+                    frames = vmState.framesList(),
                     onLedClicked = { moduleIndex, row, column ->
                         viewModel.onLedClicked(
                             moduleIndex = moduleIndex,
                             row = row,
                             column = column
                         )
+                    },
+                    onAddFrameClicked = {
+                        viewModel.onAddFrameClicked()
+                    },
+                    onDeleteFrameClicked = {
+                        viewModel.onDeleteFrameClicked()
+                    },
+                    onFrameClicked = {
+                        viewModel.onFrameClicked(it)
+                    },
+                    onFrameCopyClicked = {
+                        viewModel.onCopyFrameClicked()
                     }
                 )
 
@@ -625,7 +639,12 @@ private fun ToolsPane(
 private fun MainPane(
     modifier: Modifier = Modifier,
     modules: List<Module>,
-    onLedClicked: (moduleIndex: Int, row: Int, column: Int) -> Unit
+    frames: List<FrameItem>,
+    onLedClicked: (moduleIndex: Int, row: Int, column: Int) -> Unit,
+    onAddFrameClicked: () -> Unit,
+    onDeleteFrameClicked: () -> Unit,
+    onFrameClicked: (number: Int) -> Unit,
+    onFrameCopyClicked: () -> Unit
 ) {
     Box(
         modifier = modifier
@@ -633,28 +652,128 @@ private fun MainPane(
             .background(color = Cl.mainGrey)
     ) {
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .heightIn(50.dp, 300.dp)
-                .wrapContentHeight()
-                .padding(50.dp),
-            horizontalArrangement = Arrangement.Center
+        Column(
+            Modifier.fillMaxSize()
         ) {
 
-            modules.forEachIndexed { mIndex, module ->
-                ModuleUI(
-                    modifier = Modifier
-                        .weight(1f, fill = false),
-                    leds = module.toUiLedEnabledMatrix(),
-                    onClick = { row, column ->
-                        onLedClicked.invoke(
-                            mIndex,
-                            row,
-                            column
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(50.dp, 300.dp)
+                    .wrapContentHeight()
+                    .padding(50.dp)
+                    .weight(1f),
+                horizontalArrangement = Arrangement.Center
+            ) {
+
+                modules.forEachIndexed { mIndex, module ->
+                    ModuleUI(
+                        modifier = Modifier
+                            .weight(1f, fill = false),
+                        leds = module.toUiLedEnabledMatrix(),
+                        onClick = { row, column ->
+                            onLedClicked.invoke(
+                                mIndex,
+                                row,
+                                column
+                            )
+                        }
+                    )
+                }
+
+            }
+
+            // Timeline
+
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .background(color = Cl.darkGrey)
+            ) {
+
+                Row(
+                    Modifier
+                        .wrapContentSize()
+                        .padding(
+                            start = 16.dp,
+                            top = 16.dp
+                        )
+                ) {
+
+                    IconButton(
+                        modifier = Modifier
+                            .size(20.dp),
+                        onClick = {
+                            onAddFrameClicked.invoke()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("svg/add.svg"),
+                            contentDescription = null,
+                            tint = Color.White
                         )
                     }
-                )
+
+                    Spacer(Modifier.size(24.dp))
+
+                    IconButton(
+                        modifier = Modifier
+                            .size(20.dp),
+                        onClick = {
+                            onFrameCopyClicked.invoke()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("svg/copy.svg"),
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+
+                    Spacer(Modifier.size(24.dp))
+
+                    IconButton(
+                        modifier = Modifier
+                            .size(20.dp),
+                        onClick = {
+                            onDeleteFrameClicked.invoke()
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource("svg/delete.svg"),
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+                    }
+
+                }
+
+                LazyRow(
+                    Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight()
+                        .padding(
+                            top = 16.dp,
+                            bottom = 16.dp
+                        ),
+                    contentPadding = PaddingValues(horizontal = 16.dp)
+                ) {
+
+                    frames.forEach { frame ->
+                        item(key = frame.number) {
+                            FrameUI(
+                                frameItem = frame,
+                                onFrameClicked = {
+                                    onFrameClicked(frame.number)
+                                }
+                            )
+                            Spacer(Modifier.size(8.dp))
+                        }
+                    }
+
+                }
+
             }
 
         }
