@@ -11,6 +11,7 @@ import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 import com.github.pashaoleynik97.ledpanelstudio.ui.LSSection
 import com.github.pashaoleynik97.ledpanelstudio.utils.insertAt
 import com.github.pashaoleynik97.ledpanelstudio.utils.swap
+import com.github.pashaoleynik97.ledpanelstudio.utils.toArduinoSketch
 import com.github.pashaoleynik97.ledpanelstudio.utils.upd
 import kotlinx.coroutines.*
 
@@ -471,6 +472,12 @@ class MainViewModel {
             copy(
                 playing = false
             )
+        }
+    }
+
+    fun onGenerateSketchClicked() {
+        prjScope.toArduinoSketch().also {
+            println(it)
         }
     }
 

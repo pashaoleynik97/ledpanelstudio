@@ -923,6 +923,13 @@ fun main() = application {
                     },
                     icon = painterResource("svg/save_as.svg")
                 )
+                Item(
+                    "Generate Arduino Sketch",
+                    onClick = {
+                        vm.onGenerateSketchClicked()
+                    },
+                    icon = painterResource("svg/save_as.svg")
+                )
             }
         }
 
