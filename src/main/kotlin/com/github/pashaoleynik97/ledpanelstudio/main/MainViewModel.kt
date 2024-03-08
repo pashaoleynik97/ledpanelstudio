@@ -9,6 +9,7 @@ import com.github.pashaoleynik97.ledpanelstudio.main.data.*
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 import com.github.pashaoleynik97.ledpanelstudio.ui.LSSection
 import com.github.pashaoleynik97.ledpanelstudio.utils.insertAt
+import com.github.pashaoleynik97.ledpanelstudio.utils.swap
 import com.github.pashaoleynik97.ledpanelstudio.utils.upd
 
 class MainViewModel {
@@ -391,6 +392,14 @@ class MainViewModel {
         }
     }
 
+    fun onFrameMoveBwdClicked(frameNumber: Int) {
+        swapFrames(frameNumber, frameNumber - 1)
+    }
+
+    fun onFrameMoveFwdClicked(frameNumber: Int) {
+        swapFrames(frameNumber, frameNumber + 1)
+    }
+
     // endregion
 
     //==============================================================================================
@@ -470,6 +479,33 @@ class MainViewModel {
         Scopes.updateScope(
             Scopes.ScopeKey.Project,
             prjScope.copy(scenes = newScenesList)
+        )
+        mState.upd {
+            copy(
+                scenes = prjScope.scenes
+            )
+        }
+    }
+
+    private fun swapFrames(i1: Int, i2: Int) {
+        if (mState.value.currentSceneId == null) return
+        val oldScene = prjScope.scenes.find {
+            it.sceneId == mState.value.currentSceneId
+        }!!
+        val oldSceneIndex = prjScope.scenes.indexOfFirst {
+            it.sceneId == mState.value.currentSceneId
+        }
+        val newFrames = oldScene.frames.swap(i1, i2)
+        val newTimes = oldScene.framesTime.swap(i1, i2)
+        val newScene = oldScene.copy(
+            frames = newFrames,
+            framesTime = newTimes
+        )
+        Scopes.updateScope(
+            Scopes.ScopeKey.Project,
+            prjScope.copy(
+                scenes = prjScope.scenes.toMutableList().apply { this[oldSceneIndex] = newScene }
+            )
         )
         mState.upd {
             copy(

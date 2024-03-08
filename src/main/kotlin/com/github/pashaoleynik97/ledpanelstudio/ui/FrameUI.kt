@@ -26,7 +26,9 @@ fun FrameUI(
     modifier: Modifier = Modifier,
     frameItem: FrameItem,
     onFrameClicked: () -> Unit,
-    onFrameTimeSelected: (time: Long) -> Unit
+    onFrameTimeSelected: (time: Long) -> Unit,
+    onFrameMoveFwdClicked: () -> Unit,
+    onFrameMoveBwdClicked: () -> Unit
 ) {
 
     var timeMenuExpanded by remember { mutableStateOf(false) }
@@ -75,6 +77,8 @@ fun FrameUI(
                             radius = size.height / 2f,
                             center = Offset(x = size.height / 2f, y = size.height / 2f)
                         )
+                    }.clickable {
+                        onFrameMoveBwdClicked.invoke()
                     }.clip(
                         RectangleShape
                     ).align(
@@ -233,6 +237,8 @@ fun FrameUI(
                             radius = size.height / 2f,
                             center = Offset(x = 0f, y = size.height / 2f)
                         )
+                    }.clickable {
+                        onFrameMoveFwdClicked.invoke()
                     }.clip(
                         RectangleShape
                     ).align(

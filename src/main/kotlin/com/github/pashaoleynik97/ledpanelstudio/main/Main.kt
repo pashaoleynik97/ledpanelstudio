@@ -134,6 +134,12 @@ fun App(
                     },
                     onFrameTimeSelected = { frameNumber, frameTime ->
                         viewModel.onFrameTimeSelected(frameNumber, frameTime)
+                    },
+                    onFrameMoveFwdClicked = {
+                        viewModel.onFrameMoveFwdClicked(it)
+                    },
+                    onFrameMoveBwdClicked = {
+                        viewModel.onFrameMoveBwdClicked(it)
                     }
                 )
 
@@ -648,7 +654,9 @@ private fun MainPane(
     onDeleteFrameClicked: () -> Unit,
     onFrameClicked: (number: Int) -> Unit,
     onFrameCopyClicked: () -> Unit,
-    onFrameTimeSelected: (frameNumber: Int, frameTime: Long) -> Unit
+    onFrameTimeSelected: (frameNumber: Int, frameTime: Long) -> Unit,
+    onFrameMoveBwdClicked: (frameNumber: Int) -> Unit,
+    onFrameMoveFwdClicked: (frameNumber: Int) -> Unit
 ) {
 
     Box(
@@ -777,6 +785,12 @@ private fun MainPane(
                                         frame.number,
                                         time
                                     )
+                                },
+                                onFrameMoveBwdClicked = {
+                                    onFrameMoveBwdClicked.invoke(frame.number)
+                                },
+                                onFrameMoveFwdClicked = {
+                                    onFrameMoveFwdClicked.invoke(frame.number)
                                 }
                             )
 

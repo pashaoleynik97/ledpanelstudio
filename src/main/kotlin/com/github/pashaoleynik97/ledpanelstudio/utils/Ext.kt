@@ -33,3 +33,12 @@ fun <V> List<V>.insertAt(index: Int, v: V): List<V> {
     if (index in indices) return subList(0, index) + v + subList(index, indices.last + 1)
     return this + v
 }
+
+fun <V> List<V>.swap(i1: Int, i2: Int): List<V> {
+    if (i1 !in indices || i2 !in indices) throw IndexOutOfBoundsException("Given indices $i1, $i2 not in List bounds")
+    val copy = this.toMutableList()
+    return copy.also {
+        it[i2] = this[i1]
+        it[i1] = this[i2]
+    }
+}
