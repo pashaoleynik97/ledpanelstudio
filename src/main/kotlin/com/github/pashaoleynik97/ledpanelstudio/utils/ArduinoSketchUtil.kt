@@ -2,6 +2,7 @@ package com.github.pashaoleynik97.ledpanelstudio.utils
 
 import com.github.pashaoleynik97.ledpanelstudio.data.MRow
 import com.github.pashaoleynik97.ledpanelstudio.data.Module
+import com.github.pashaoleynik97.ledpanelstudio.data.Scene
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 
 fun Scopes.ProjectScope.toArduinoSketch(): String {
@@ -34,17 +35,19 @@ fun Scopes.ProjectScope.toArduinoSketch(): String {
         append(System.lineSeparator())
         append("{")
         append(System.lineSeparator())
-        append("mx.begin();")
+        append("  mx.begin();")
         append(System.lineSeparator())
-        append("mx.control(MD_MAX72XX::INTENSITY, 5);")
+        append("  mx.control(MD_MAX72XX::INTENSITY, 5);")
         append(System.lineSeparator())
-        append("mx.clear();")
+        append("  mx.clear();")
         append(System.lineSeparator())
         append("}")
         append(System.lineSeparator())
         append(System.lineSeparator())
 
-        append("void lightLed(int module, int row, byte value) {")
+        append("void lightLed(int module, int row, byte value)")
+        append(System.lineSeparator())
+        append("{")
         append(System.lineSeparator())
         append("  mx.setRow(module, row, value);")
         append(System.lineSeparator())
@@ -53,7 +56,9 @@ fun Scopes.ProjectScope.toArduinoSketch(): String {
         append(System.lineSeparator())
 
         scenes.forEach { scene ->
-            append("void a${scene.name}() {")
+            append("void a${scene.name}()")
+            append(System.lineSeparator())
+            append("{")
             append(System.lineSeparator())
             scene.frames.forEachIndexed { frameIndex, frame ->
                 val alteredFrame = if (direction == Scopes.ProjectScope.Direction.RTL) {
@@ -64,33 +69,57 @@ fun Scopes.ProjectScope.toArduinoSketch(): String {
                 }
                 append(System.lineSeparator())
                 append("  delay(${scene.framesTime[frameIndex]});")
+                append(System.lineSeparator())
                 append("  mx.clear();")
                 append(System.lineSeparator())
                 append(System.lineSeparator())
             }
             append("}")
+            append(System.lineSeparator())
+            append(System.lineSeparator())
         }
 
-        append("void loop() {")
+        append(System.lineSeparator())
+        append(System.lineSeparator())
+        append("void loop()")
+        append(System.lineSeparator())
+        append("{")
         append(System.lineSeparator())
         append("  mx.clear();")
         append(System.lineSeparator())
         append(System.lineSeparator())
 
         scenes.forEach { scene ->
-            append("  a${scene.name}();")
-            append(System.lineSeparator())
-            append(System.lineSeparator())
+
+            if (scene.isInterstitial(this@toArduinoSketch).not()) {
+                append("  a${scene.name}();")
+                append(System.lineSeparator())
+                append(System.lineSeparator())
+
+                interstitialScene()?.let { iScene ->
+                    append("  // interstitial")
+                    append(System.lineSeparator())
+                    append("  a${iScene.name}();")
+                    append(System.lineSeparator())
+                    append(System.lineSeparator())
+                }
+            }
+
         }
 
         append(System.lineSeparator())
         append("}")
 
-
-
-
     }.toString()
 
+}
+
+private fun Scopes.ProjectScope.interstitialScene(): Scene? {
+    return scenes.firstOrNull { it.sceneId == this.interstitialSceneId }
+}
+
+private fun Scene.isInterstitial(prj: Scopes.ProjectScope): Boolean {
+    return sceneId == prj.interstitialSceneId
 }
 
 private fun Module.toLedCommands(moduleIndex: Int): String {

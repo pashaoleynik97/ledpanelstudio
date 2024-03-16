@@ -7,6 +7,7 @@ interface SceneUiItem {
 data class SceneItem(
     val name: String,
     val selected: Boolean,
+    val interstitial: Boolean,
     override val id: String
 ) : SceneUiItem
 

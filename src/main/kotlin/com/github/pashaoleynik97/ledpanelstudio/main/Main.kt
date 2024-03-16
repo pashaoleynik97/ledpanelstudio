@@ -11,6 +11,7 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -105,6 +106,9 @@ fun App(
                     },
                     onSceneClicked = {
                         viewModel.onSceneClicked(it)
+                    },
+                    onInterstitialCheckChanged = {
+                        viewModel.onInterstitialCheckChanged(it)
                     }
                 )
 
@@ -322,7 +326,8 @@ private fun ScenesPane(
     onDeleteScenePressed: (sceneId: String) -> Unit,
     onSceneIterationsIncrement: () -> Unit,
     onSceneIterationsDecrement: () -> Unit,
-    onSceneClicked: (sceneId: String) -> Unit
+    onSceneClicked: (sceneId: String) -> Unit,
+    onInterstitialCheckChanged: (Boolean) -> Unit,
 ) {
     Box(
         modifier = modifier
@@ -388,11 +393,23 @@ private fun ScenesPane(
                                         }
                                 ) {
 
+                                    if (item.interstitial) {
+                                        Spacer(Modifier.width(16.dp))
+                                        Icon(
+                                            modifier = Modifier
+                                                .align(Alignment.CenterVertically)
+                                                .size(12.dp),
+                                            imageVector = Icons.Default.Star,
+                                            contentDescription = null,
+                                            tint = Color.White
+                                        )
+                                    }
+
                                     Text(
                                         modifier = Modifier.padding(
                                             top = 12.dp,
                                             bottom = 12.dp,
-                                            start = 16.dp
+                                            start = if (item.interstitial) 8.dp else 16.dp
                                         ).weight(1f),
                                         text = item.name,
                                         color = Color.White,
@@ -487,6 +504,37 @@ private fun ScenesPane(
                             value = sceneProperties.iterations,
                             onIncrement = onSceneIterationsIncrement,
                             onDecrement = onSceneIterationsDecrement
+                        )
+
+                        Spacer(Modifier.size(8.dp))
+                    }
+
+                    Spacer(Modifier.size(8.dp))
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight()
+                    ) {
+                        Text(
+                            modifier = Modifier
+                                .wrapContentHeight()
+                                .weight(1f)
+                                .align(Alignment.CenterVertically)
+                                .padding(start = 16.dp),
+                            text = "Interstitial:",
+                            color = Color.White,
+                            fontSize = 12.sp
+                        )
+
+                        Checkbox(
+                            modifier = Modifier
+                                .wrapContentSize()
+                                .align(Alignment.CenterVertically),
+                            checked = sceneProperties.interstitial,
+                            onCheckedChange = { isChecked ->
+                                onInterstitialCheckChanged.invoke(isChecked)
+                            }
                         )
 
                         Spacer(Modifier.size(8.dp))
@@ -885,7 +933,8 @@ fun main() = application {
 
     Window(
         title = "Unnamed Project",
-        onCloseRequest = ::exitApplication
+        onCloseRequest = ::exitApplication,
+        icon = painterResource("icon.png")
     ) {
 
         window.minimumSize = Dimension(1080, 720)

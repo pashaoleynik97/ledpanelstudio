@@ -50,6 +50,7 @@ class MainViewModel {
         val modulesDirection: Scopes.ProjectScope.Direction,
         val sceneToDelete: String? = null,
         val tool: Tool = Tool.SMART,
+        val interstitialId: String? = null,
         val playing: Boolean = false
     ) {
 
@@ -79,6 +80,7 @@ class MainViewModel {
                     SceneItem(
                         name = it.name,
                         selected = it.sceneId == currentSceneId,
+                        interstitial = it.sceneId == interstitialId,
                         id = it.sceneId
                     )
                 }
@@ -88,10 +90,10 @@ class MainViewModel {
         }
 
         fun framesList(): List<FrameItem> {
-            if (scenes.isEmpty()) return listOf()
-            val scene = scenes.first {
+            if (scenes.isEmpty()) return emptyList()
+            val scene = scenes.firstOrNull {
                 it.sceneId == currentSceneId
-            }
+            } ?: return emptyList()
             val frames = scene.frames
             val framesTime = scene.framesTime
             return frames.mapIndexed { fIndex, frame ->
@@ -110,7 +112,7 @@ class MainViewModel {
             if (currentSceneId == null) return null
             return ScenePropertiesUiData(
                 iterations = scenes.find { it.sceneId == currentSceneId }!!.iterations,
-                interstitial = false, // todo change to actual
+                interstitial = scenes.find { it.sceneId == currentSceneId }?.sceneId == interstitialId,
                 frames = scenes.find { it.sceneId == currentSceneId }!!.frames.size
             )
         }
@@ -133,7 +135,8 @@ class MainViewModel {
         VmState(
             scenes = prjScope.scenes,
             modulesCount = prjScope.modulesCount,
-            modulesDirection = prjScope.direction
+            modulesDirection = prjScope.direction,
+            interstitialId = prjScope.interstitialSceneId
         )
     )
     val state: MutableState<VmState> get() = mState
@@ -283,6 +286,30 @@ class MainViewModel {
         addScene()
     }
 
+    fun onInterstitialCheckChanged(isChecked: Boolean) {
+        if (mState.value.playing) return
+        if (mState.value.currentSceneId == null) return
+        if (isChecked.not() && mState.value.currentSceneId == mState.value.interstitialId) {
+            Scopes.updateScope(
+                Scopes.ScopeKey.Project,
+                prjScope.copy(
+                    interstitialSceneId = null
+                )
+            )
+        } else {
+            Scopes.updateScope(
+                Scopes.ScopeKey.Project,
+                prjScope.copy(
+                    interstitialSceneId = mState.value.currentSceneId
+                )
+            )
+        }
+        mState.upd {
+            copy(
+                interstitialId = prjScope.interstitialSceneId
+            )
+        }
+    }
     fun onFrameClicked(number: Int) {
         if (isAnimPlaying) return
         if (mState.value.currentSceneId == null) return
