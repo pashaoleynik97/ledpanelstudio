@@ -45,7 +45,7 @@ fun Scopes.ProjectScope.toArduinoSketch(): String {
         append(System.lineSeparator())
         append(System.lineSeparator())
 
-        append("void lightLed(int module, int row, byte value)")
+        append("void lightLed(byte module, byte row, byte value)")
         append(System.lineSeparator())
         append("{")
         append(System.lineSeparator())
@@ -92,14 +92,32 @@ fun Scopes.ProjectScope.toArduinoSketch(): String {
         scenes.forEach { scene ->
 
             if (scene.isInterstitial(this@toArduinoSketch).not()) {
+                if (scene.iterations > 1) {
+                    append("  for (byte i = 0; i < ${scene.iterations}; i++) {")
+                    append(System.lineSeparator())
+                    append("  ")
+                }
                 append("  a${scene.name}();")
+                append(System.lineSeparator())
+                if (scene.iterations > 1) {
+                    append("  }")
+                }
                 append(System.lineSeparator())
                 append(System.lineSeparator())
 
                 interstitialScene()?.let { iScene ->
                     append("  // interstitial")
                     append(System.lineSeparator())
+                    if (iScene.iterations > 1) {
+                        append("  for (byte i = 0; i < ${iScene.iterations}; i++) {")
+                        append(System.lineSeparator())
+                        append("  ")
+                    }
                     append("  a${iScene.name}();")
+                    append(System.lineSeparator())
+                    if (iScene.iterations > 1) {
+                        append("  }")
+                    }
                     append(System.lineSeparator())
                     append(System.lineSeparator())
                 }
@@ -126,8 +144,11 @@ private fun Module.toLedCommands(moduleIndex: Int): String {
     val rows = arrayOf(r0, r1, r2, r3, r4, r5, r6, r7)
     return StringBuilder().apply {
         rows.forEachIndexed { i, row ->
-            append("  lightLed($moduleIndex, $i, ${row.toHex()});")
-            append(System.lineSeparator())
+            val hex = row.toHex()
+            if ((hex != "0x0")) {
+                append("  lightLed($moduleIndex, $i, ${row.toHex()});")
+                append(System.lineSeparator())
+            }
         }
     }.toString()
 }

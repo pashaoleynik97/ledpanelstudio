@@ -45,7 +45,6 @@ fun App(
 
     var showDeleteDialog by remember { mutableStateOf(Pair(false, "")) }
     var showNewProjectDialog by remember { mutableStateOf(false) }
-//    var showProjectSaveDialog by remember { mutableStateOf(false) }
 
     val uiCallbacks = remember {
         object : MainViewModel.UiCallbacks {
@@ -314,20 +313,6 @@ fun App(
                 }
             )
         }
-
-//        if (showProjectSaveDialog) {
-//            AlertDialog(
-//                onDismissRequest = {
-//                    showProjectSaveDialog = false
-//                },
-//                text = {
-//                       FileDialog
-//                },
-//                buttons = {
-//
-//                }
-//            )
-//        }
 
     }
 
