@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.awt.ComposeWindow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -29,6 +30,8 @@ import com.github.pashaoleynik97.ledpanelstudio.main.data.*
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 import com.github.pashaoleynik97.ledpanelstudio.ui.*
 import java.awt.Dimension
+import java.awt.FileDialog
+import java.io.File
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -42,6 +45,7 @@ fun App(
 
     var showDeleteDialog by remember { mutableStateOf(Pair(false, "")) }
     var showNewProjectDialog by remember { mutableStateOf(false) }
+//    var showProjectSaveDialog by remember { mutableStateOf(false) }
 
     val uiCallbacks = remember {
         object : MainViewModel.UiCallbacks {
@@ -310,6 +314,20 @@ fun App(
                 }
             )
         }
+
+//        if (showProjectSaveDialog) {
+//            AlertDialog(
+//                onDismissRequest = {
+//                    showProjectSaveDialog = false
+//                },
+//                text = {
+//                       FileDialog
+//                },
+//                buttons = {
+//
+//                }
+//            )
+//        }
 
     }
 
@@ -937,6 +955,10 @@ fun main() = application {
         icon = painterResource("icon.png")
     ) {
 
+        fun setNewTitle(t: String) {
+            this@Window.window.title = t
+        }
+
         window.minimumSize = Dimension(1080, 720)
 
         MenuBar {
@@ -953,7 +975,20 @@ fun main() = application {
                     "Open",
                     mnemonic = 'O',
                     onClick = {
-
+                        openFileDialog(
+                            window = this@Window.window,
+                            title = "Open Project",
+                            allowedExtensions = listOf(".ledp"),
+                            allowMultiSelection = false
+                        ).let {
+                            if (it.isEmpty()) return@let
+                            vm.onOpenFilePathSelected(
+                                path = it.first().absolutePath,
+                                doOnFail = {
+                                    // todo show error dialog
+                                }
+                            )
+                        }
                     },
                     icon = painterResource("svg/open.svg")
                 )
@@ -961,14 +996,32 @@ fun main() = application {
                     "Save",
                     mnemonic = 'S',
                     onClick = {
-
+                        if (vm.onSaveInvoked().not()) {
+                            openSaveFileDialog(
+                                window = this@Window.window,
+                                title = "Open Project",
+                                allowedExtensions = listOf(".ledp"),
+                                allowMultiSelection = false
+                            ).let {
+                                if (it.isEmpty()) return@let
+                                vm.onSaveAsPathSelected(it.first().absolutePath)
+                            }
+                        }
                     },
                     icon = painterResource("svg/save.svg")
                 )
                 Item(
                     "Save as...",
                     onClick = {
-
+                        openSaveFileDialog(
+                            window = this@Window.window,
+                            title = "Open Project",
+                            allowedExtensions = listOf(".ledp"),
+                            allowMultiSelection = false
+                        ).let {
+                            if (it.isEmpty()) return@let
+                            vm.onSaveAsPathSelected(it.first().absolutePath)
+                        }
                     },
                     icon = painterResource("svg/save_as.svg")
                 )
@@ -982,7 +1035,53 @@ fun main() = application {
             }
         }
 
-
         App(vm)
+
+        LaunchedEffect(vm.state.value.workingFile) {
+            if (vm.state.value.workingFile == null) {
+                if (window.title != "Unnamed Project") setNewTitle("Unnamed Project")
+                return@LaunchedEffect
+            }
+            if (vm.state.value.workingFile != window.title) {
+                setNewTitle(vm.state.value.workingFile!!)
+            }
+        }
+
     }
+}
+
+fun openFileDialog(window: ComposeWindow, title: String, allowedExtensions: List<String>, allowMultiSelection: Boolean = true): Set<File> {
+    return FileDialog(window, title, FileDialog.LOAD).apply {
+        isMultipleMode = allowMultiSelection
+
+        // windows
+        file = allowedExtensions.joinToString(";") { "*$it" } // e.g. '*.ledp'
+
+        // linux
+        setFilenameFilter { _, name ->
+            allowedExtensions.any {
+                name.endsWith(it)
+            }
+        }
+
+        isVisible = true
+    }.files.toSet()
+}
+
+fun openSaveFileDialog(window: ComposeWindow, title: String, allowedExtensions: List<String>, allowMultiSelection: Boolean = true): Set<File> {
+    return FileDialog(window, title, FileDialog.SAVE).apply {
+        isMultipleMode = allowMultiSelection
+
+        // windows
+        file = allowedExtensions.joinToString(";") { "*$it" } // e.g. '*.ledp'
+
+        // linux
+        setFilenameFilter { _, name ->
+            allowedExtensions.any {
+                name.endsWith(it)
+            }
+        }
+
+        isVisible = true
+    }.files.toSet()
 }

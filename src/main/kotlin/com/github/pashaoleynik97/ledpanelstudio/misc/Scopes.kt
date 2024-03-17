@@ -1,6 +1,7 @@
 package com.github.pashaoleynik97.ledpanelstudio.misc
 
 import com.github.pashaoleynik97.ledpanelstudio.data.Scene
+import java.io.Serializable
 
 object Scopes {
 
@@ -60,7 +61,7 @@ object Scopes {
         val direction: Direction = Direction.RTL,
         val scenes: List<Scene> = listOf(),
         val interstitialSceneId: String? = null,
-    ) : Scope {
+    ) : Scope, Serializable {
 
         enum class Direction {
             LTR, RTL

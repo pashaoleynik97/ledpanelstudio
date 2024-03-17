@@ -1,5 +1,6 @@
 package com.github.pashaoleynik97.ledpanelstudio.data
 
+import java.io.Serializable
 import java.util.UUID
 
 data class Scene(
@@ -8,7 +9,7 @@ data class Scene(
     val framesTime: List<Long>,
     val sceneId: String = UUID.randomUUID().toString(),
     val iterations: Int = 1
-)
+): Serializable
 
 data class Module(
     val ordinal: Int,
@@ -20,7 +21,7 @@ data class Module(
     val r5: MRow = MRow(),
     val r6: MRow = MRow(),
     val r7: MRow = MRow()
-)
+): Serializable
 
 data class MRow(
     val c0: Boolean = false,
@@ -31,4 +32,4 @@ data class MRow(
     val c5: Boolean = false,
     val c6: Boolean = false,
     val c7: Boolean = false
-)
+): Serializable

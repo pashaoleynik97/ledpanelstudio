@@ -1,7 +1,6 @@
 package com.github.pashaoleynik97.ledpanelstudio.main
 
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.currentComposer
 import androidx.compose.runtime.mutableStateOf
 import com.github.pashaoleynik97.ledpanelstudio.data.MRow
 import com.github.pashaoleynik97.ledpanelstudio.data.Module
@@ -9,10 +8,7 @@ import com.github.pashaoleynik97.ledpanelstudio.data.Scene
 import com.github.pashaoleynik97.ledpanelstudio.main.data.*
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 import com.github.pashaoleynik97.ledpanelstudio.ui.LSSection
-import com.github.pashaoleynik97.ledpanelstudio.utils.insertAt
-import com.github.pashaoleynik97.ledpanelstudio.utils.swap
-import com.github.pashaoleynik97.ledpanelstudio.utils.toArduinoSketch
-import com.github.pashaoleynik97.ledpanelstudio.utils.upd
+import com.github.pashaoleynik97.ledpanelstudio.utils.*
 import kotlinx.coroutines.*
 
 class MainViewModel {
@@ -51,7 +47,8 @@ class MainViewModel {
         val sceneToDelete: String? = null,
         val tool: Tool = Tool.SMART,
         val interstitialId: String? = null,
-        val playing: Boolean = false
+        val playing: Boolean = false,
+        val workingFile: String? = null
     ) {
 
         internal fun safeCurrentFrame(): Int {
@@ -505,6 +502,51 @@ class MainViewModel {
     fun onGenerateSketchClicked() {
         prjScope.toArduinoSketch().also {
             println(it)
+        }
+    }
+
+    fun onSaveInvoked(): Boolean {
+        if (mState.value.workingFile == null) return false
+        saveProject(prjScope, mState.value.workingFile!!)
+        return true
+    }
+
+    fun onSaveAsPathSelected(path: String) {
+        val safePath = if (path.endsWith(".ledp", ignoreCase = true)) path else "$path.ledp"
+        saveProject(prjScope, safePath)
+        mState.upd {
+            copy(
+                workingFile = safePath
+            )
+        }
+    }
+
+    fun onOpenFilePathSelected(path: String, doOnFail: () -> Unit) {
+        if (path.endsWith(".ledp", ignoreCase = true).not()) return
+        runCatching {
+            openProject(path)
+        }.onFailure {
+            doOnFail.invoke()
+        }.onSuccess { openedProject ->
+            Scopes.updateScope(
+                Scopes.ScopeKey.Project,
+                openedProject
+            )
+            mState.upd {
+                copy(
+                    presentation = Presentation.EDITOR,
+                    scenes = prjScope.scenes,
+                    currentSceneId = prjScope.scenes.firstOrNull()?.sceneId,
+                    modulesCount = prjScope.modulesCount,
+                    modulesDirection = prjScope.direction,
+                    currentFrame = 0,
+                    sceneToDelete = null,
+                    tool = Tool.SMART,
+                    interstitialId = prjScope.interstitialSceneId,
+                    playing = false,
+                    workingFile = path
+                )
+            }
         }
     }
 
