@@ -29,9 +29,27 @@ compose.desktop {
         // https://github.com/JetBrains/compose-multiplatform/blob/master/tutorials/Native_distributions_and_local_execution/README.md
 
         nativeDistributions {
+            includeAllModules = true
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Exe, TargetFormat.Deb)
             packageName = "ledpanelprj"
             packageVersion = "1.0.0"
+
+            macOS {
+                // a version for all macOS distributables
+                packageVersion = "1.0.0"
+                // a version only for the dmg package
+                dmgPackageVersion = "1.0.0"
+                // a version only for the pkg package
+                pkgPackageVersion = "1.0.0"
+
+                // a build version for all macOS distributables
+                packageBuildVersion = "1.0.0"
+                // a build version only for the dmg package
+                dmgPackageBuildVersion = "1.0.0"
+                // a build version only for the pkg package
+                pkgPackageBuildVersion = "1.0.0"
+                bundleID = "com.github.pashaoleynik97.ledpanelstudio.Studio"
+            }
         }
     }
 }
