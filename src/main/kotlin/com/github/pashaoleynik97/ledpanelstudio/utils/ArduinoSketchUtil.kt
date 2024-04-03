@@ -5,7 +5,11 @@ import com.github.pashaoleynik97.ledpanelstudio.data.Module
 import com.github.pashaoleynik97.ledpanelstudio.data.Scene
 import com.github.pashaoleynik97.ledpanelstudio.misc.Scopes
 
-fun Scopes.ProjectScope.toArduinoSketch(): String {
+fun Scopes.ProjectScope.toArduinoSketch(
+    din: Int,
+    cs: Int,
+    clk: Int
+): String {
 
     return StringBuilder().apply {
 
@@ -19,11 +23,11 @@ fun Scopes.ProjectScope.toArduinoSketch(): String {
         append(System.lineSeparator())
         append("#define MAX_DEVICES $modulesCount")
         append(System.lineSeparator())
-        append("#define CLK_PIN   13")
+        append("#define CLK_PIN   $clk")
         append(System.lineSeparator())
-        append("#define DATA_PIN  11")
+        append("#define DATA_PIN  $din")
         append(System.lineSeparator())
-        append("#define CS_PIN    10")
+        append("#define CS_PIN    $cs")
         append(System.lineSeparator())
         append(System.lineSeparator())
 

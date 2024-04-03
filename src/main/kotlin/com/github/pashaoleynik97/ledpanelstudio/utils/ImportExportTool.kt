@@ -11,6 +11,16 @@ fun openProject(path: String): Scopes.ProjectScope {
     return readObjectFromFile(path)
 }
 
+fun saveSketch(sketch: String, pathToSave: String) {
+    writeStringToFile(sketch, pathToSave)
+}
+
+private fun writeStringToFile(string: String, filePath: String) {
+    File(filePath).printWriter().use { outputStream ->
+        outputStream.print(string)
+    }
+}
+
 private fun <T> writeObjectToFile(obj: T, filePath: String) {
     ObjectOutputStream(FileOutputStream(filePath)).use { outputStream ->
         outputStream.writeObject(obj)

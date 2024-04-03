@@ -1,8 +1,7 @@
 package com.github.pashaoleynik97.ledpanelstudio.main
 
 import androidx.compose.desktop.ui.tooling.preview.Preview
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -37,7 +36,8 @@ import java.io.File
 @Composable
 @Preview
 fun App(
-    viewModel: MainViewModel
+    viewModel: MainViewModel,
+    onSaveSketch: (din: Int, cs: Int, clk: Int) -> Unit
 ) {
 
     val vmState = viewModel.state.value
@@ -45,6 +45,7 @@ fun App(
 
     var showDeleteDialog by remember { mutableStateOf(Pair(false, "")) }
     var showNewProjectDialog by remember { mutableStateOf(false) }
+    var showSketchDialog by remember { mutableStateOf(false) }
 
     val uiCallbacks = remember {
         object : MainViewModel.UiCallbacks {
@@ -54,6 +55,10 @@ fun App(
 
             override fun showNewProjectDialog() {
                 showNewProjectDialog = true
+            }
+
+            override fun showSketchDialog() {
+                showSketchDialog = true
             }
         }
     }
@@ -312,6 +317,165 @@ fun App(
                     }
                 }
             )
+        }
+
+        if (showSketchDialog) {
+
+            var dataPin by remember { mutableStateOf(11) }
+            var clockPin by remember { mutableStateOf(13) }
+            var csPin by remember { mutableStateOf(10) }
+
+            AlertDialog(
+                onDismissRequest = {
+                    showSketchDialog = false
+                },
+                title = {
+                        Text(
+                            text = "Arduino Sketch"
+                        )
+                },
+                text = {
+                    Column {
+                        Text(
+                            "Choose the pins. Then just Copy/Paste the output Sketch code to the Arduino IDE.",
+                            color = Color.White,
+                            fontSize = 14.sp
+                        )
+
+                        Spacer(Modifier.size(24.dp))
+
+                        Row(
+                            Modifier
+                                .wrapContentSize()
+                                .align(Alignment.CenterHorizontally)
+                        ) {
+
+                            Text(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                text = "DIN:",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+
+                            Spacer(Modifier.size(16.dp))
+
+                            NumberPickerUi(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                value = dataPin,
+                                onIncrement = {
+                                    if (dataPin <= 30) dataPin += 1
+                                },
+                                onDecrement = {
+                                    if (dataPin >= 2) dataPin -= 1
+                                }
+                            )
+
+                        }
+
+                        Spacer(Modifier.size(16.dp))
+
+                        Row(
+                            Modifier
+                                .wrapContentSize()
+                                .align(Alignment.CenterHorizontally)
+                        ) {
+
+                            Text(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                text = "CS:",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+
+                            Spacer(Modifier.size(16.dp))
+
+                            NumberPickerUi(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                value = csPin,
+                                onIncrement = {
+                                    if (csPin <= 30) csPin += 1
+                                },
+                                onDecrement = {
+                                    if (csPin >= 2) csPin -= 1
+                                }
+                            )
+
+                        }
+
+                        Spacer(Modifier.size(16.dp))
+
+                        Row(
+                            Modifier
+                                .wrapContentSize()
+                                .align(Alignment.CenterHorizontally)
+                        ) {
+
+                            Text(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                text = "CLK:",
+                                color = Color.White,
+                                fontSize = 14.sp
+                            )
+
+                            Spacer(Modifier.size(16.dp))
+
+                            NumberPickerUi(
+                                modifier = Modifier
+                                    .wrapContentSize()
+                                    .align(Alignment.CenterVertically),
+                                value = clockPin,
+                                onIncrement = {
+                                    if (clockPin <= 30) clockPin += 1
+                                },
+                                onDecrement = {
+                                    if (clockPin >= 2) clockPin -= 1
+                                }
+                            )
+
+                        }
+
+                        Spacer(Modifier.size(16.dp))
+                    }
+                },
+                buttons = {
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .wrapContentHeight(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Button(
+                            onClick = {
+                                showSketchDialog = false
+                                onSaveSketch.invoke(dataPin, csPin, clockPin)
+                            }
+                        ) {
+                            Text("Generate Sketch")
+                        }
+
+                        Spacer(Modifier.size(8.dp))
+
+                        Button(
+                            onClick = {
+                                showSketchDialog = false
+                            }
+                        ) {
+                            Text("Cancel")
+                        }
+                    }
+                }
+            )
+
         }
 
     }
@@ -930,7 +1094,6 @@ private fun MainPane(
     }
 }
 
-
 fun main() = application {
     val vm = MainViewModel()
 
@@ -984,7 +1147,7 @@ fun main() = application {
                         if (vm.onSaveInvoked().not()) {
                             openSaveFileDialog(
                                 window = this@Window.window,
-                                title = "Open Project",
+                                title = "Save Project",
                                 allowedExtensions = listOf(".ledp"),
                                 allowMultiSelection = false
                             ).let {
@@ -1000,7 +1163,7 @@ fun main() = application {
                     onClick = {
                         openSaveFileDialog(
                             window = this@Window.window,
-                            title = "Open Project",
+                            title = "Save Project As",
                             allowedExtensions = listOf(".ledp"),
                             allowMultiSelection = false
                         ).let {
@@ -1020,7 +1183,25 @@ fun main() = application {
             }
         }
 
-        App(vm)
+        App(
+            viewModel = vm,
+            onSaveSketch = { din, cs, clk ->
+                openSaveFileDialog(
+                    window = this@Window.window,
+                    title = "Save Sketch",
+                    allowedExtensions = listOf(".ino"),
+                    allowMultiSelection = false
+                ).let {
+                    if (it.isEmpty()) return@let
+                    vm.onSaveSketchPathSelected(
+                        path = it.first().absolutePath,
+                        din = din,
+                        cs = cs,
+                        clk = clk
+                    )
+                }
+            }
+        )
 
         LaunchedEffect(vm.state.value.workingFile) {
             if (vm.state.value.workingFile == null) {

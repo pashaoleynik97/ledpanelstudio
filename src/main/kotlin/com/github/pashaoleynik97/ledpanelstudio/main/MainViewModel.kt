@@ -19,6 +19,7 @@ class MainViewModel {
     interface UiCallbacks {
         fun showSceneDeleteDialog(sceneName: String)
         fun showNewProjectDialog()
+        fun showSketchDialog()
     }
 
     var uiCallbacks: UiCallbacks? = null
@@ -500,9 +501,7 @@ class MainViewModel {
     }
 
     fun onGenerateSketchClicked() {
-        prjScope.toArduinoSketch().also {
-            println(it)
-        }
+        uiCallbacks?.showSketchDialog()
     }
 
     fun onSaveInvoked(): Boolean {
@@ -519,6 +518,12 @@ class MainViewModel {
                 workingFile = safePath
             )
         }
+    }
+
+    fun onSaveSketchPathSelected(path: String, din: Int, cs: Int, clk: Int) {
+        val safePath = if (path.endsWith(".ino", ignoreCase = true)) path else "$path.ino"
+        val sketch = getSketch(din = din, cs = cs, clk = clk)
+        saveSketch(sketch, safePath)
     }
 
     fun onOpenFilePathSelected(path: String, doOnFail: () -> Unit) {
@@ -583,7 +588,7 @@ class MainViewModel {
                     framesTime = listOf(
                         500L
                     ),
-                    name = "Scene_${System.currentTimeMillis().hashCode()}"
+                    name = "Scene_${System.currentTimeMillis()}"
                 ).also { newSceneId = it.sceneId }
             )
         }
@@ -712,6 +717,18 @@ class MainViewModel {
         6 -> c6
         7 -> c7
         else -> throw IllegalArgumentException("MRow does not contain LED with index $i")
+    }
+
+    private fun getSketch(
+        din: Int,
+        cs: Int,
+        clk: Int
+    ): String {
+        return prjScope.toArduinoSketch(
+            din = din,
+            cs = cs,
+            clk = clk
+        )
     }
 
     // endregion
